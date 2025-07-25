@@ -9,7 +9,9 @@ import React from 'react';
 import Header from './components/Header';
 import MessageList from './components/MessageList';
 import MessageInput from './components/MessageInput';
+import Sidebar from './components/Sidebar';
 import useChat from './hooks/useChat';
+import useConversations from './hooks/useConversations';
 import './App.css';
 
 /**
@@ -18,8 +20,21 @@ import './App.css';
  * @returns {JSX.Element} The main App component
  */
 function App() {
-  // Use custom hook for chat functionality
-  // This follows Dependency Inversion Principle by depending on abstraction
+  // Use custom hook for conversations management
+  const {
+    conversations,
+    currentConversationId,
+    isSidebarCollapsed,
+    createNewConversation,
+    selectConversation,
+    deleteConversation,
+    renameConversation,
+    updateConversationWithMessage,
+    toggleSidebarCollapse,
+    hasConversations
+  } = useConversations();
+
+  // Use custom hook for chat functionality with conversation context
   const {
     messages,
     isTyping,
@@ -30,39 +45,151 @@ function App() {
     getChatStats,
     hasMessages,
     isProcessing
-  } = useChat();
+  } = useChat({
+    conversationId: currentConversationId,
+    onMessageSent: updateConversationWithMessage
+  });
+
+  /**
+   * Handles creating a new conversation
+   */
+  const handleNewChat = () => {
+    createNewConversation();
+  };
 
   /**
    * Handles message sending from the input component
+   * Creates new conversation if none exists
    * @param {string} messageText - The message text to send
    */
   const handleSendMessage = async (messageText) => {
+    // Create new conversation if none exists
+    let conversationId = currentConversationId;
+    if (!conversationId) {
+      conversationId = createNewConversation(messageText);
+    }
+    
     await sendMessage(messageText);
   };
 
   /**
-   * Handles clearing the chat conversation
+   * Handles clearing the current chat conversation
    */
   const handleClearChat = () => {
-    if (window.confirm('Are you sure you want to clear the conversation?')) {
+    if (window.confirm('Are you sure you want to delete this conversation?')) {
       clearMessages();
+      if (currentConversationId) {
+        // Clear messages from localStorage for this conversation
+        localStorage.removeItem(`chatia_messages_${currentConversationId}`);
+      }
     }
+  };
+
+  /**
+   * Handles sharing the current conversation
+   */
+  const handleShareChat = () => {
+    if (messages.length <= 1) {
+      alert('No conversation to share yet.');
+      return;
+    }
+    
+    // Create shareable text
+    const conversationText = messages
+      .filter(msg => msg.sender === 'user' || msg.sender === 'ai')
+      .map(msg => `${msg.sender === 'user' ? 'User' : 'AI'}: ${msg.text}`)
+      .join('\n\n');
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(conversationText).then(() => {
+      alert('Conversation copied to clipboard!');
+    }).catch(() => {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = conversationText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('Conversation copied to clipboard!');
+    });
+  };
+
+  /**
+   * Handles renaming a conversation
+   * @param {string} conversationId - ID of conversation to rename
+   * @param {string} newTitle - New title for the conversation
+   */
+  const handleRenameConversation = (conversationId, newTitle) => {
+    renameConversation(conversationId, newTitle);
+  };
+
+  /**
+   * Handles sharing a specific conversation
+   * @param {string} conversationId - ID of conversation to share
+   */
+  const handleShareConversation = (conversationId) => {
+    // Get messages for the specific conversation
+    const conversationMessages = JSON.parse(
+      localStorage.getItem(`chatia_messages_${conversationId}`) || '[]'
+    );
+    
+    if (conversationMessages.length <= 1) {
+      alert('No conversation content to share.');
+      return;
+    }
+    
+    // Create shareable text
+    const conversationText = conversationMessages
+      .filter(msg => msg.sender === 'user' || msg.sender === 'ai')
+      .map(msg => `${msg.sender === 'user' ? 'User' : 'AI'}: ${msg.text}`)
+      .join('\n\n');
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(conversationText).then(() => {
+      alert('Conversation copied to clipboard!');
+    }).catch(() => {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = conversationText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('Conversation copied to clipboard!');
+    });
   };
 
   // Get current chat statistics
   const chatStats = getChatStats();
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col">
-      {/* Fixed Application Header */}
-      <div className="flex-shrink-0">
-        <Header 
-          title="Chat IA"
-          subtitle="AI Assistant"
-          onClearChat={hasMessages ? handleClearChat : null}
-          chatStats={chatStats}
-        />
-      </div>
+    <div className="h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <Sidebar
+        conversations={conversations}
+        currentConversationId={currentConversationId}
+        onNewChat={handleNewChat}
+        onSelectConversation={selectConversation}
+        onDeleteConversation={deleteConversation}
+        onRenameConversation={handleRenameConversation}
+        onShareConversation={handleShareConversation}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapse}
+      />
+      
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Fixed Application Header */}
+        <div className="flex-shrink-0">
+           <Header 
+             title="Chat AI"
+             subtitle="Intelligent AI Assistant"
+             onClearChat={hasMessages ? handleClearChat : null}
+             onShareChat={hasMessages ? handleShareChat : null}
+             chatStats={chatStats}
+           />
+         </div>
       
       {/* Error Display */}
       {error && (
@@ -112,17 +239,18 @@ function App() {
         />
       </div>
       
-      {/* Fixed Footer with app info */}
-      <div className="flex-shrink-0">
-        <footer className="bg-white border-t border-gray-200 py-2 px-4">
-          <div className="max-w-4xl mx-auto">
-            <p className="text-xs text-gray-500 text-center">
-              Chat IA - AI Assistant | 
-              Messages: {chatStats.totalMessages} | 
-              Powered by React & Tailwind CSS
-            </p>
-          </div>
-        </footer>
+        {/* Fixed Footer with app info */}
+        <div className="flex-shrink-0">
+          <footer className="bg-white border-t border-gray-200 py-2 px-4">
+            <div className="max-w-4xl mx-auto">
+              <p className="text-xs text-gray-500 text-center">
+                Chat IA - Assistant IA | 
+                Messages: {chatStats.totalMessages} | 
+                Conversations: {conversations.length}
+              </p>
+            </div>
+          </footer>
+        </div>
       </div>
     </div>
   );

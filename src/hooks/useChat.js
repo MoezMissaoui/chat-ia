@@ -4,28 +4,62 @@
  * Follows Dependency Inversion Principle by depending on abstractions (ChatService)
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { createMessage } from '../types/Message';
 import chatService from '../services/ChatService';
 
 /**
  * Custom hook for managing chat functionality
  * @param {Object} options - Configuration options
- * @param {Array} options.initialMessages - Initial messages to display
+ * @param {string} options.conversationId - Current conversation ID
+ * @param {Function} options.onMessageSent - Callback when message is sent
  * @returns {Object} Chat state and methods
  */
 const useChat = (options = {}) => {
+  const { conversationId, onMessageSent } = options;
+  
   // Default initial message from AI
   const defaultInitialMessages = [
     createMessage(1, "Hello! I'm your AI assistant. How can I help you today?", 'ai')
   ];
 
   // Initialize state
-  const [messages, setMessages] = useState(
-    options.initialMessages || defaultInitialMessages
-  );
+  const [messages, setMessages] = useState(defaultInitialMessages);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState(null);
+
+  /**
+   * Loads messages for the current conversation from localStorage
+   */
+  useEffect(() => {
+    if (conversationId) {
+      const savedMessages = localStorage.getItem(`chatia_messages_${conversationId}`);
+      if (savedMessages) {
+        try {
+          const parsedMessages = JSON.parse(savedMessages);
+          setMessages(parsedMessages);
+        } catch (error) {
+          console.error('Error loading messages:', error);
+          setMessages(defaultInitialMessages);
+        }
+      } else {
+        // New conversation, start with default messages
+        setMessages(defaultInitialMessages);
+      }
+    } else {
+      // No conversation selected, show default messages
+      setMessages(defaultInitialMessages);
+    }
+  }, [conversationId]);
+
+  /**
+   * Saves messages to localStorage whenever they change
+   */
+  useEffect(() => {
+    if (conversationId && messages.length > 0) {
+      localStorage.setItem(`chatia_messages_${conversationId}`, JSON.stringify(messages));
+    }
+  }, [conversationId, messages]);
 
   /**
    * Generates the next message ID
@@ -79,6 +113,13 @@ const useChat = (options = {}) => {
 
       // Add AI response to chat
       setMessages(prevMessages => [...prevMessages, aiResponse]);
+
+      // Notify parent component about the new message
+      if (onMessageSent && conversationId) {
+        const lastMessage = aiResponse.text;
+        const messageCount = messages.length + 2; // +1 for user message, +1 for AI response
+        onMessageSent(conversationId, lastMessage, messageCount);
+      }
 
     } catch (err) {
       // Handle errors
