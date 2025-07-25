@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 /**
  * Sidebar component for chat navigation and history
@@ -173,7 +174,12 @@ const Sidebar = ({
       <div className="p-3 border-b border-gray-700">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
-            <h2 className="text-lg font-semibold">Chat AI</h2>
+            <Link 
+              to="/" 
+              className="text-lg font-semibold hover:text-blue-400 transition-colors cursor-pointer"
+            >
+              Chat AI
+            </Link>
           )}
           <button
             onClick={onToggleCollapse}
