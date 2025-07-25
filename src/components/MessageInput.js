@@ -111,7 +111,7 @@ const MessageInput = ({
   return (
     <div className={`bg-white border-t border-gray-200 p-4 ${className}`}>
       <div className="max-w-4xl mx-auto">
-        <div className="flex space-x-4">
+        <div className="flex items-end space-x-4">
           {/* Input textarea container */}
           <div className="flex-1 relative">
             <textarea
@@ -139,11 +139,11 @@ const MessageInput = ({
             )}
           </div>
           
-          {/* Send button */}
+          {/* Send button - fixed size and aligned to bottom */}
           <button
             onClick={handleSendMessage}
             disabled={isSendDisabled}
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="flex-shrink-0 w-11 h-11 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
             aria-label="Send message"
           >
             {/* Send icon */}
