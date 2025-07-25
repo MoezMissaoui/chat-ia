@@ -4,14 +4,14 @@
  * Follows Dependency Inversion Principle by depending on AuthService abstraction
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import authService from '../services/AuthService';
 
-/**
- * Custom hook for managing authentication functionality
- * @returns {Object} Authentication state and methods
- */
-const useAuth = () => {
+// Create Auth Context
+const AuthContext = createContext(null);
+
+// Auth Provider Component
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,8 +49,9 @@ const useAuth = () => {
       const result = await authService.login(email, password);
       
       if (result.success) {
-        setUser(result.user);
-        setIsAuthenticated(true);
+        // Sync with AuthService state
+        setUser(authService.getCurrentUser());
+        setIsAuthenticated(authService.getIsAuthenticated());
         return true;
       }
       
@@ -76,8 +77,9 @@ const useAuth = () => {
       const result = await authService.register(userData);
       
       if (result.success) {
-        setUser(result.user);
-        setIsAuthenticated(true);
+        // Sync with AuthService state
+        setUser(authService.getCurrentUser());
+        setIsAuthenticated(authService.getIsAuthenticated());
         return true;
       }
       
@@ -95,8 +97,9 @@ const useAuth = () => {
    */
   const logout = useCallback(() => {
     authService.logout();
-    setUser(null);
-    setIsAuthenticated(false);
+    // Sync with AuthService state
+    setUser(authService.getCurrentUser());
+    setIsAuthenticated(authService.getIsAuthenticated());
     setError(null);
   }, []);
 
@@ -113,7 +116,8 @@ const useAuth = () => {
       const result = await authService.updateProfile(profileData);
       
       if (result.success) {
-        setUser(result.user);
+        // Sync with AuthService state
+        setUser(authService.getCurrentUser());
         return true;
       }
       
@@ -155,7 +159,7 @@ const useAuth = () => {
     return authService.getUserInitials();
   }, []);
 
-  return {
+  const value = {
     // State
     user,
     isAuthenticated,
@@ -171,6 +175,26 @@ const useAuth = () => {
     clearError,
     getUserInitials
   };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+/**
+ * Custom hook for accessing authentication context
+ * @returns {Object} Authentication state and methods
+ */
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  
+  return context;
 };
 
 export default useAuth;
