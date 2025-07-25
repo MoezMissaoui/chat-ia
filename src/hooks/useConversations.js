@@ -19,6 +19,9 @@ const useConversations = () => {
   // State for current active conversation
   const [currentConversationId, setCurrentConversationId] = useState(null);
   
+  // State for tracking if conversations have been loaded from localStorage
+  const [conversationsLoaded, setConversationsLoaded] = useState(false);
+  
   // State for sidebar collapse - initialize from localStorage
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     const savedSidebarState = localStorage.getItem('chatia_sidebar_collapsed');
@@ -44,6 +47,9 @@ const useConversations = () => {
     if (savedCurrentId) {
       setCurrentConversationId(savedCurrentId);
     }
+    
+    // Mark conversations as loaded
+    setConversationsLoaded(true);
   }, []);
 
   /**
@@ -72,10 +78,15 @@ const useConversations = () => {
   }, [isSidebarCollapsed]);
 
   /**
-   * Generates a unique conversation ID
+   * Generates a unique conversation ID using UUID
    * @returns {string} Unique conversation ID
    */
   const generateConversationId = useCallback(() => {
+    // Use crypto.randomUUID() if available, fallback to timestamp-based ID
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback for older browsers
     return `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }, []);
 
@@ -127,10 +138,13 @@ const useConversations = () => {
 
   /**
    * Selects an existing conversation
-   * @param {string} conversationId - ID of conversation to select
+   * @param {string|null} conversationId - ID of conversation to select, or null to clear selection
    */
   const selectConversation = useCallback((conversationId) => {
     setCurrentConversationId(conversationId);
+    if (conversationId === null) {
+      localStorage.removeItem('chatia_current_conversation');
+    }
   }, []);
 
   /**
@@ -235,6 +249,7 @@ const useConversations = () => {
     conversations,
     currentConversationId,
     isSidebarCollapsed,
+    conversationsLoaded,
     
     // Actions
     createNewConversation,
