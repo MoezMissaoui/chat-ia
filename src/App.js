@@ -41,7 +41,8 @@ function App() {
     renameConversation,
     updateConversationWithMessage,
     toggleSidebarCollapse,
-    hasConversations
+    hasConversations,
+    getCurrentConversation
   } = useConversations();
 
   // Use custom hook for chat functionality with conversation context
@@ -83,15 +84,16 @@ function App() {
   };
 
   /**
-   * Handles clearing the current chat conversation
+   * Handles deleting the current chat conversation
    */
   const handleClearChat = () => {
-    if (window.confirm('Are you sure you want to delete this conversation?')) {
+    if (currentConversationId && window.confirm('Are you sure you want to delete this conversation?')) {
+      // Delete the conversation using the same method as sidebar
+      deleteConversation(currentConversationId);
+      // Clear messages from localStorage for this conversation
+      localStorage.removeItem(`chatia_messages_${currentConversationId}`);
+      // Clear current messages state
       clearMessages();
-      if (currentConversationId) {
-        // Clear messages from localStorage for this conversation
-        localStorage.removeItem(`chatia_messages_${currentConversationId}`);
-      }
     }
   };
 
@@ -194,6 +196,10 @@ function App() {
 
   // Get current chat statistics
   const chatStats = getChatStats();
+  
+  // Get current conversation for title display
+  const currentConversation = getCurrentConversation();
+  const headerTitle = currentConversation ? currentConversation.title : "Chat AI";
 
   return (
     <div className="h-screen bg-gray-50 flex">
@@ -215,9 +221,9 @@ function App() {
         {/* Fixed Application Header */}
         <div className="flex-shrink-0">
            <Header 
-             title="Chat AI"
+             title={headerTitle}
              subtitle="Intelligent AI Assistant"
-             onClearChat={hasMessages ? handleClearChat : null}
+             onClearChat={currentConversationId ? handleClearChat : null}
              onShareChat={hasMessages ? handleShareChat : null}
              onShowAuth={handleShowAuth}
              onShowProfile={handleShowProfile}
