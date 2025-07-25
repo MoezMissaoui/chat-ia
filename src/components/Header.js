@@ -6,6 +6,7 @@
 
 import React from 'react';
 import DropdownMenu from './DropdownMenu';
+import useAuth from '../hooks/useAuth';
 
 /**
  * Header component for the Chat IA application
@@ -15,6 +16,8 @@ import DropdownMenu from './DropdownMenu';
  * @param {string} props.className - Additional CSS classes
  * @param {Function} props.onClearChat - Callback for clearing chat
  * @param {Function} props.onShareChat - Callback for sharing chat
+ * @param {Function} props.onShowAuth - Callback for showing auth modal
+ * @param {Function} props.onShowProfile - Callback for showing profile modal
  * @param {Object} props.chatStats - Chat statistics object
  * @returns {JSX.Element} Header component
  */
@@ -24,8 +27,11 @@ const Header = ({
   className = "",
   onClearChat = null,
   onShareChat = null,
+  onShowAuth = null,
+  onShowProfile = null,
   chatStats = null
 }) => {
+  const { user, isAuthenticated, logout } = useAuth();
   return (
     <header className={`bg-white shadow-sm border-b border-gray-200 p-4 ${className}`}>
       <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -67,25 +73,68 @@ const Header = ({
           </div>
         </div>
         
-        {/* Dropdown menu */}
-        {(onClearChat || onShareChat) && (
-          <DropdownMenu 
-            actions={[
-              ...(onShareChat ? [{
-                label: 'Share conversation',
-                icon: 'M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z',
-                onClick: onShareChat,
-                className: 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
-              }] : []),
-              ...(onClearChat ? [{
-                label: 'Delete conversation',
-                icon: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
-                onClick: onClearChat,
-                className: 'text-red-600 hover:text-red-800 hover:bg-red-50'
-              }] : [])
-            ]}
-          />
-        )}
+        {/* Right side actions */}
+        <div className="flex items-center space-x-3">
+          {/* Chat actions dropdown */}
+          {(onClearChat || onShareChat) && (
+            <DropdownMenu 
+              actions={[
+                ...(onShareChat ? [{
+                  label: 'Share conversation',
+                  icon: 'M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z',
+                  onClick: onShareChat,
+                  className: 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
+                }] : []),
+                ...(onClearChat ? [{
+                  label: 'Delete conversation',
+                  icon: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
+                  onClick: onClearChat,
+                  className: 'text-red-600 hover:text-red-800 hover:bg-red-50'
+                }] : [])
+              ]}
+            />
+          )}
+          
+          {/* Authentication section */}
+          {isAuthenticated ? (
+            /* User profile dropdown */
+            <DropdownMenu
+              trigger={
+                <div className="flex items-center space-x-2 p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 cursor-pointer">
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <span className="text-sm font-medium">{user?.name || 'User'}</span>
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              }
+              actions={[
+                {
+                  label: 'Profile Settings',
+                  icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+                  onClick: onShowProfile
+                },
+                {
+                  label: 'Sign Out',
+                  icon: 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
+                  onClick: logout,
+                  className: 'text-red-600 hover:text-red-800 hover:bg-red-50'
+                }
+              ]}
+              menuClassName="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+            />
+          ) : (
+            /* Login button */
+            <button
+              onClick={onShowAuth}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] text-sm"
+            >
+              Sign In
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

@@ -5,13 +5,16 @@
  * Follows Dependency Inversion Principle by depending on abstractions (hooks, components)
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import Header from './components/Header';
 import MessageList from './components/MessageList';
 import MessageInput from './components/MessageInput';
 import Sidebar from './components/Sidebar';
+import AuthForm from './components/AuthForm';
+import UserProfile from './components/UserProfile';
 import useChat from './hooks/useChat';
 import useConversations from './hooks/useConversations';
+import useAuth from './hooks/useAuth';
 import './App.css';
 
 /**
@@ -20,6 +23,13 @@ import './App.css';
  * @returns {JSX.Element} The main App component
  */
 function App() {
+  // Authentication state
+  const { user, isAuthenticated } = useAuth();
+  
+  // Modal states
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  
   // Use custom hook for conversations management
   const {
     conversations,
@@ -160,6 +170,28 @@ function App() {
     });
   };
 
+  /**
+   * Handles showing the authentication modal
+   */
+  const handleShowAuth = () => {
+    setShowAuthModal(true);
+  };
+
+  /**
+   * Handles showing the profile modal
+   */
+  const handleShowProfile = () => {
+    setShowProfileModal(true);
+  };
+
+  /**
+   * Handles closing modals
+   */
+  const handleCloseModals = () => {
+    setShowAuthModal(false);
+    setShowProfileModal(false);
+  };
+
   // Get current chat statistics
   const chatStats = getChatStats();
 
@@ -187,6 +219,8 @@ function App() {
              subtitle="Intelligent AI Assistant"
              onClearChat={hasMessages ? handleClearChat : null}
              onShareChat={hasMessages ? handleShareChat : null}
+             onShowAuth={handleShowAuth}
+             onShowProfile={handleShowProfile}
              chatStats={chatStats}
            />
          </div>
@@ -247,11 +281,30 @@ function App() {
                 Chat IA - Assistant IA | 
                 Messages: {chatStats.totalMessages} | 
                 Conversations: {conversations.length}
+                {isAuthenticated && user && ` | Welcome, ${user.name}`}
               </p>
             </div>
           </footer>
         </div>
       </div>
+      
+      {/* Authentication Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <AuthForm onClose={handleCloseModals} />
+          </div>
+        </div>
+      )}
+      
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <UserProfile onClose={handleCloseModals} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
