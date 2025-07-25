@@ -19,8 +19,11 @@ const useConversations = () => {
   // State for current active conversation
   const [currentConversationId, setCurrentConversationId] = useState(null);
   
-  // State for sidebar collapse
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  // State for sidebar collapse - initialize from localStorage
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const savedSidebarState = localStorage.getItem('chatia_sidebar_collapsed');
+    return savedSidebarState !== null ? JSON.parse(savedSidebarState) : false;
+  });
 
   /**
    * Loads conversations from localStorage on component mount
@@ -28,7 +31,6 @@ const useConversations = () => {
   useEffect(() => {
     const savedConversations = localStorage.getItem('chatia_conversations');
     const savedCurrentId = localStorage.getItem('chatia_current_conversation');
-    const savedSidebarState = localStorage.getItem('chatia_sidebar_collapsed');
     
     if (savedConversations) {
       try {
@@ -41,10 +43,6 @@ const useConversations = () => {
     
     if (savedCurrentId) {
       setCurrentConversationId(savedCurrentId);
-    }
-    
-    if (savedSidebarState) {
-      setIsSidebarCollapsed(JSON.parse(savedSidebarState));
     }
   }, []);
 
