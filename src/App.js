@@ -53,18 +53,20 @@ function App() {
   const chatStats = getChatStats();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Application Header */}
-      <Header 
-        title="Chat IA"
-        subtitle="AI Assistant"
-        onClearChat={hasMessages ? handleClearChat : null}
-        chatStats={chatStats}
-      />
+    <div className="h-screen bg-gray-50 flex flex-col">
+      {/* Fixed Application Header */}
+      <div className="flex-shrink-0">
+        <Header 
+          title="Chat IA"
+          subtitle="AI Assistant"
+          onClearChat={hasMessages ? handleClearChat : null}
+          chatStats={chatStats}
+        />
+      </div>
       
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-4 mt-4">
+        <div className="flex-shrink-0 bg-red-50 border-l-4 border-red-400 p-4 mx-4">
           <div className="flex items-center justify-between">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -92,18 +94,17 @@ function App() {
         </div>
       )}
       
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Messages Container */}
-        <div className="flex-1 overflow-hidden">
-          <MessageList 
-            messages={messages}
-            isTyping={isTyping}
-            className="h-full"
-          />
-        </div>
-        
-        {/* Message Input */}
+      {/* Scrollable Chat Area */}
+      <div className="flex-1 overflow-hidden">
+        <MessageList 
+          messages={messages}
+          isTyping={isTyping}
+          className="h-full"
+        />
+      </div>
+      
+      {/* Fixed Message Input */}
+      <div className="flex-shrink-0">
         <MessageInput 
           onSendMessage={handleSendMessage}
           disabled={isProcessing}
@@ -111,16 +112,18 @@ function App() {
         />
       </div>
       
-      {/* Footer with app info */}
-      <footer className="bg-white border-t border-gray-200 py-2 px-4">
-        <div className="max-w-4xl mx-auto">
-          <p className="text-xs text-gray-500 text-center">
-            Chat IA - AI Assistant | 
-            Messages: {chatStats.totalMessages} | 
-            Powered by React & Tailwind CSS
-          </p>
-        </div>
-      </footer>
+      {/* Fixed Footer with app info */}
+      <div className="flex-shrink-0">
+        <footer className="bg-white border-t border-gray-200 py-2 px-4">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-xs text-gray-500 text-center">
+              Chat IA - AI Assistant | 
+              Messages: {chatStats.totalMessages} | 
+              Powered by React & Tailwind CSS
+            </p>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
