@@ -9,7 +9,7 @@ import UserProfile from './UserProfile';
 import HomePage from './HomePage';
 import useChat from '../hooks/useChat';
 import useConversations from '../hooks/useConversations';
-import useAuth from '../hooks/useAuth';
+import useAuth from '../hooks/useAuth.jsx';
 
 /**
  * ChatInterface Component - Handles the main chat interface with routing

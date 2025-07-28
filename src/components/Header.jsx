@@ -6,7 +6,7 @@
 
 import React from 'react';
 import DropdownMenu from './DropdownMenu';
-import useAuth from '../hooks/useAuth';
+import useAuth from '../hooks/useAuth.jsx';
 
 /**
  * Header component for the Chat IA application

@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import useAuth from '../hooks/useAuth';
+import useAuth from '../hooks/useAuth.jsx';
 
 /**
  * User profile component for managing user information and settings
